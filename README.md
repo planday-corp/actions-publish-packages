@@ -40,7 +40,7 @@ This repository contains a Github action which purpose is to build and publish a
 | `registrydev` | `string` | `true` | Azure dev Containers Registry to pull base images from |
 | `dockerargs` | `string` | `false` | Additional build arguments for docker, provided as a multiline string |
 | `dockerfile` | `string` | `false` | Path of the Dockerfile. Default: `Dockerfile` |
-| `service_build_number` | `string` | `true` | Value of the `SERVICE_BUILD_NUMBER` build argument |
+| `service_build_number` | `string` | `false` | Value of the `SERVICE_BUILD_NUMBER` build argument |
 | `teamcity_version` | `boolean` | `false` | Value of the `TEAMCITY_VERSION` build argument. Default: `false` |
 #### Secrets
 
@@ -91,7 +91,6 @@ jobs:
     with:
       image_name: "myproject"
       registrydev: "registrydev.azurecr.io"
-      version_suffix: "rc"
       sonarqube_project_name: "myproject"
       sonarqube_version: "3.2.1"
       service_build_number: "1.0.${{ env.GITHUB_RUN_NUMBER }}"

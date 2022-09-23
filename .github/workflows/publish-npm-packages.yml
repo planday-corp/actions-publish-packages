@@ -31,7 +31,7 @@ on:
       service_build_number:
         type: string
         description: "Value of the SERVICE_BUILD_NUMBER build argument"
-        required: true
+        required: false
       teamcity_version:
         type: boolean
         description: "Value of the TEAMCITY_VERSION build argument"
@@ -100,7 +100,7 @@ jobs:
       with:
         push: false
         pull: true
-        tags: ${{ inputs.image_name }}:${{ inputs.service_build_number }}
+        tags: ${{ inputs.image_name }}
         file: ${{ inputs.dockerfile }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
