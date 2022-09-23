@@ -14,6 +14,7 @@ This repository contains a Github action which purpose is to build and publish a
 | `sonarqube_version` | `string` | `false` | Version of the SonarQube project |
 | `registrydev` | `string` | `true` | Azure dev Containers Registry to pull base images from |
 | `dockerargs` | `string` | `false` | Additional build arguments for docker, provided as a multiline string |
+| `dockerfile` | `string` | `false` | Path of the Dockerfile. Default: `Dockerfile` |
 
 ### Secrets
 | Name | Required | Description |

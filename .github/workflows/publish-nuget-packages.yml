@@ -28,7 +28,12 @@ on:
         type: string
         description: "Additional build arguments for docker, provided as a multiline string"
         required: false
-    
+      dockerfile:
+        type: string
+        description: "Path of the Dockerfile"
+        required: false
+        default: Dockerfile
+
     secrets:
       acr_username: 
         description: "Service Principal ID for Azure ACR"
@@ -72,7 +77,7 @@ jobs:
         push: false
         pull: true
         tags: ${{ inputs.image_name }}:${{ inputs.version_suffix }}
-        file: Dockerfile
+        file: ${{ inputs.dockerfile }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
         build-args: |
@@ -83,4 +88,4 @@ jobs:
           SONARQUBE_PROJECT_NAME=${{ inputs.sonarqube_project_name }}
           SONARQUBE_TOKEN=${{ secrets.sonarqube_token }}
           SONARQUBE_VERSION=${{ inputs.sonarqube_version }}
-          ${{inputs.dockerargs}}
+          ${{ inputs.dockerargs }}
