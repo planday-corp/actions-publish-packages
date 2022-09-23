@@ -87,7 +87,7 @@ jobs:
         # in the format of 'refs/heads/<branch_name>'
         else:
           # strip the 'refs/heads/' from the branch name
-          branch_name = os.environ["GITHUB_REF"]
+          branch_name = os.environ["GITHUB_REF"].replace("refs/heads/", "")
         
         print("##[set-output name=branch_name;]"+branch_name)
     
