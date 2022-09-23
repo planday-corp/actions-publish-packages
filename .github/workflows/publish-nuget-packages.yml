@@ -1,0 +1,86 @@
+name: Build and publish NuGet packages to Planday's ProGet feed
+
+on:
+  workflow_call:
+    inputs:
+      image_name:
+        type: string
+        description: "Name of the Docker image to build. (ex: 'myapp')"
+        required: true
+      version_suffix:
+        type: string
+        description: "Package version suffix. Set this to empty to move the package out of prerelease"
+        required: false
+        default: "beta"
+      sonarqube_project_name:
+        type: string
+        description: "Name of the project in SonarQube"
+        required: false
+      sonarqube_version:
+        type: string
+        description: "Version of the SonarQube project"
+        required: false
+      registrydev: 
+        type: string
+        description: "Azure dev Containers Registry to pull base images from"
+        required: true
+      dockerargs:
+        type: string
+        description: "Additional build arguments for docker, provided as a multiline string"
+        required: false
+    
+    secrets:
+      acr_username: 
+        description: "Service Principal ID for Azure ACR"
+        required: true
+      acr_password: 
+        description: "Service Principal password for Azure ACR"
+        required: true
+      packages_api_key:
+        description: "API key of the ProGet feed server"
+        required: true
+      packages_feed_url:
+        description: "URL of the ProGet feed server"
+        required: true
+      sonarqube_token:
+        description: "SonarQube server token"
+        required: false
+      sonarqube_server_url:
+        description: "URL of the SonarQube server"
+        required: false
+
+jobs:
+  build-and-publish:
+    name: Build and publish NuGet package to Planday's ProGet feed
+    runs-on: self-hosted
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Log in to Azure dev ACR
+      uses: docker/login-action@v1.10.0
+      with:
+        registry: ${{ inputs.registrydev }}
+        username: ${{ secrets.acr_username }}
+        password: ${{ secrets.acr_password }}
+    
+    - name: Build image to publish package to ProGet feed
+      uses: docker/build-push-action@v2
+      with:
+        push: false
+        pull: true
+        tags: ${{ inputs.image_name }}:${{ inputs.version_suffix }}
+        file: Dockerfile
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        build-args: |
+          PACKAGE_VERSION_SUFFIX=${{ inputs.version_suffix }}
+          PACKAGE_SERVER_URL=${{ inputs.packages_feed_url }}
+          PACKAGE_SERVER_KEY=${{ secrets.packages_api_key }}
+          SONARQUBE_URL=${{ inputs.sonarqube_server_url }}
+          SONARQUBE_PROJECT_NAME=${{ inputs.sonarqube_project_name }}
+          SONARQUBE_TOKEN=${{ secrets.sonarqube_token }}
+          SONARQUBE_VERSION=${{ inputs.sonarqube_version }}
+          ${{inputs.dockerargs}}
