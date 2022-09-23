@@ -1,0 +1,118 @@
+name: Build and publish NPM packages to Planday's ProGet feed
+
+on:
+  workflow_call:
+    inputs:
+      image_name:
+        type: string
+        description: "Name of the Docker image to build. (ex: 'myapp')"
+        required: true
+      sonarqube_project_name:
+        type: string
+        description: "Name of the project in SonarQube"
+        required: false
+      sonarqube_version:
+        type: string
+        description: "Version of the SonarQube project"
+        required: false
+      registrydev: 
+        type: string
+        description: "Azure dev Containers Registry to pull base images from"
+        required: true
+      dockerargs:
+        type: string
+        description: "Additional build arguments for docker, provided as a multiline string"
+        required: false
+      dockerfile:
+        type: string
+        description: "Path of the Dockerfile"
+        required: false
+        default: Dockerfile
+      service_build_number:
+        type: string
+        description: "Value of the SERVICE_BUILD_NUMBER build argument"
+        required: true
+      teamcity_version:
+        type: boolean
+        description: "Value of the TEAMCITY_VERSION build argument"
+        required: false
+        default: true
+
+    secrets:
+      acr_username: 
+        description: "Service Principal ID for Azure ACR"
+        required: true
+      acr_password: 
+        description: "Service Principal password for Azure ACR"
+        required: true
+      packages_api_key:
+        description: "API key of the ProGet feed server"
+        required: true
+      sonarqube_token:
+        description: "SonarQube server token"
+        required: false
+      sonarqube_server_url:
+        description: "URL of the SonarQube server"
+        required: false
+
+jobs:
+  build-and-publish:
+    name: Build and publish NuGet package to Planday's ProGet feed
+    runs-on: self-hosted
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Log in to Azure dev ACR
+      uses: docker/login-action@v1.10.0
+      with:
+        registry: ${{ inputs.registrydev }}
+        username: ${{ secrets.acr_username }}
+        password: ${{ secrets.acr_password }}
+    
+    - name: Get branch name
+      id: get_branch_name
+      shell: python3 {0}
+      run: |
+        import os
+
+        # GITHUB_HEAD_REF is only set in a pull_request and contains the name of the branch.
+        # ref: https://docs.github.com/en/actions/learn-github-actions/environment-variables#default-environment-variables
+        if os.environ.get('GITHUB_HEAD_REF') != "":
+          branch_name=os.environ["GITHUB_HEAD_REF"]
+        
+        # GITHUB_REF will contains the branch name that was pushed
+        # in the format of 'refs/heads/<branch_name>'
+        else:
+          # strip the 'refs/heads/' from the branch name
+          branch_name = os.environ["GITHUB_REF"]
+        
+        print("##[set-output name=branch_name;]"+branch_name)
+    
+    - name: Generate build timestamp
+      id: build_timestamp
+      run: echo "##[set-output name=build_timestamp;]$(date --iso-8601=seconds)"
+    
+    - name: Build image to publish package to ProGet feed
+      uses: docker/build-push-action@v2
+      with:
+        push: false
+        pull: true
+        tags: ${{ inputs.image_name }}:${{ inputs.service_build_number }}
+        file: ${{ inputs.dockerfile }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        build-args: |
+          PROGET_AUTH_TOKEN=${{ secrets.packages_api_key }}
+          TEAMCITY_VERSION=${{ inputs.teamcity_version }}
+          SERVICE_BUILD_NUMBER=${{ inputs.service_build_number }}
+          SERVICE_GIT_BRANCH=${{ steps.get_branch_name.outputs.branch_name }}
+          SERVICE_BUILD_TIMESTAMP=${{ steps.build_timestamp.outputs.build_timestamp }}
+          SERVICE_GIT_REVISION=${{ github.sha }}
+          SONARQUBE_URL=${{ inputs.sonarqube_server_url }}
+          SONARQUBE_PROJECT_NAME=${{ inputs.sonarqube_project_name }}
+          SONARQUBE_TOKEN=${{ secrets.sonarqube_token }}
+          SONARQUBE_VERSION=${{ inputs.sonarqube_version }}
+          ${{ inputs.dockerargs }}
