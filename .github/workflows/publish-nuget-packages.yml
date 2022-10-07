@@ -24,14 +24,6 @@ on:
         type: string
         description: "Azure dev Containers Registry to pull base images from"
         required: true
-      packages_feed_url:
-        type: string
-        description: "URL of the ProGet feed server"
-        required: true
-      sonarqube_server_url:
-        type: string
-        description: "URL of the SonarQube server"
-        required: true
       dockerargs:
         type: string
         description: "Additional build arguments for docker, provided as a multiline string"
@@ -54,6 +46,12 @@ on:
       sonarqube_token:
         description: "SonarQube server token"
         required: false
+      packages_feed_url:
+        description: "URL of the ProGet feed server"
+        required: true
+      sonarqube_server_url:
+        description: "URL of the SonarQube server"
+        required: true
 
 jobs:
   build-and-publish:
@@ -83,9 +81,9 @@ jobs:
         cache-to: type=gha,mode=max
         build-args: |
           PACKAGE_VERSION_SUFFIX=${{ inputs.version_suffix }}
-          PACKAGE_SERVER_URL=${{ inputs.packages_feed_url }}
+          PACKAGE_SERVER_URL=${{ secrets.packages_feed_url }}
           PACKAGE_SERVER_KEY=${{ secrets.packages_api_key }}
-          SONARQUBE_URL=${{ inputs.sonarqube_server_url }}
+          SONARQUBE_URL=${{ secrets.sonarqube_server_url }}
           SONARQUBE_PROJECT_NAME=${{ inputs.sonarqube_project_name }}
           SONARQUBE_TOKEN=${{ secrets.sonarqube_token }}
           SONARQUBE_VERSION=${{ inputs.sonarqube_version }}
