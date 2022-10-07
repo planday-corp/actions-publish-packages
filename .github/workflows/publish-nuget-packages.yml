@@ -24,6 +24,14 @@ on:
         type: string
         description: "Azure dev Containers Registry to pull base images from"
         required: true
+      packages_feed_url:
+        type: string
+        description: "URL of the ProGet feed server"
+        required: true
+      sonarqube_server_url:
+        type: string
+        description: "URL of the SonarQube server"
+        required: true
       dockerargs:
         type: string
         description: "Additional build arguments for docker, provided as a multiline string"
@@ -33,7 +41,6 @@ on:
         description: "Path of the Dockerfile"
         required: false
         default: Dockerfile
-
     secrets:
       acr_username: 
         description: "Service Principal ID for Azure ACR"
@@ -44,14 +51,8 @@ on:
       packages_api_key:
         description: "API key of the ProGet feed server"
         required: true
-      packages_feed_url:
-        description: "URL of the ProGet feed server"
-        required: true
       sonarqube_token:
         description: "SonarQube server token"
-        required: false
-      sonarqube_server_url:
-        description: "URL of the SonarQube server"
         required: false
 
 jobs:
