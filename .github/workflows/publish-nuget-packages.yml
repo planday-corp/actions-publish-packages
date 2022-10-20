@@ -76,7 +76,7 @@ jobs:
         push: false
         pull: true
         tags: |
-          ${{ inputs.image_name }}: ${{ github.ref }}
+          ${{ inputs.image_name }}: ${{ github.actor.id }}
         file: ${{ inputs.dockerfile }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
