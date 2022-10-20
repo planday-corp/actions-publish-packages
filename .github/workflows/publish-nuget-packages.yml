@@ -75,7 +75,8 @@ jobs:
       with:
         push: false
         pull: true
-        tags: ${{ inputs.image_name }}:${{ inputs.version_suffix }}
+        tags: |
+          ${{ inputs.image_name }}: ${{ github.ref }}
         file: ${{ inputs.dockerfile }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
